@@ -1,4 +1,5 @@
 from Backtester.backtester import backtester
+from . import config
 from ..strategy import strategy
 import itertools
 from Utils.add_features import add_RSI
@@ -59,7 +60,7 @@ class RSI(strategy):
         return df[["Datetime", "signal", "lb", "ub", "RSI"]]
 
 
-    def plotting_function(self, df):
+    def plotting_function(self, df, save_to=None):
         bval = 1
         sval = 0
         buy_plot_mask = ((df.signal.shift(-1) == bval) & (df.signal == sval))
@@ -87,10 +88,13 @@ class RSI(strategy):
                 plt.axvspan(df['Datetime'][j], df['Datetime'][i],
                             alpha=0.5, color=d_color[df.signal[i - 1]], label="interval")
                 j = i
-        plt.show()
+        if save_to != None:
+            plt.savefig(save_to)
+        else:
+            plt.show()
+        plt.clf()
 
         plt.plot(df['Datetime'], df['RSI'], color='black', label='RSI')
-
         plt.plot(df['Datetime'], df['lb'], color='green', label='Lower Bound')
         plt.plot(df['Datetime'], df['ub'], color='red', label='Upper Bound')
 
@@ -117,7 +121,34 @@ class RSI(strategy):
                 plt.axvspan(df['Datetime'][j], df['Datetime'][i],
                             alpha=0.5, color=d_color[df.signal[i - 1]], label="interval")
                 j = i
-        plt.show()
+        if save_to != None:
+            plt.savefig(save_to)
+        else:
+            plt.show()
+        plt.clf()
+
+    @staticmethod
+    def get_optimization_params():
+        feature_space = [config.params_searchspace["lookbacks"]]
+        parameter_searchspace = [config.params_searchspace[key] for key in config.params_searchspace.keys()]
+        metric_searchspace = [config.metrics]
+        strategy_lookbacks = config.strategy_lookbacks
+        number_of_optimisation_periods = config.number_of_optimisation_periods
+        recalib_periods = config.recalib_periods
+        num_strategies = config.num_strategies
+        metrics_opt = config.metrics_opt
+        number_selected_filteredstrategies = config.number_selected_filteredstrategies
+        consider_selected_strategies_over = config.consider_selected_strategies_over
+        number_selected_strategies = config.number_selected_strategies
+        starting_points = config.starting_points
+        return { "feature_space": feature_space, "parameter_searchspace": parameter_searchspace, "metric_searchspace": metric_searchspace,
+                "strategy_lookbacks": strategy_lookbacks,
+                "number_of_optimisation_periods": number_of_optimisation_periods,
+                "recalib_periods": recalib_periods, "num_strategies": num_strategies, "metrics_opt": metrics_opt,
+                "number_selected_filteredstrategies": number_selected_filteredstrategies,
+                "consider_selected_strategies_over": consider_selected_strategies_over,
+                "number_selected_strategies": number_selected_strategies,
+                "starting_points": starting_points}
 
 
 
