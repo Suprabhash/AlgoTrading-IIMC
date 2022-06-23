@@ -1,6 +1,5 @@
 import warnings
 warnings.filterwarnings("ignore")
-%matplotlib inline
 import matplotlib.pyplot as plt
 plt.rcParams["figure.figsize"] = (15,5)
 plt.rcParams['axes.grid'] = False
