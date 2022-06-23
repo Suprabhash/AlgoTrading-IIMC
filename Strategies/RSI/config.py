@@ -6,8 +6,8 @@ from Utils.utils import frange
 
 params_searchspace = {
     "lookbacks": frange(14, 16, 2),
-    "ub": frange(20,30,10),
-    "lb": frange(60,70,10)
+    "ub": frange(10,50,5),
+    "lb": frange(50,100,5)
 }
 
 metrics = [SharpeRatio]
