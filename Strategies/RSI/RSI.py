@@ -1,4 +1,3 @@
-from Backtester.backtester import backtester
 from . import config
 from ..strategy import strategy
 import itertools
