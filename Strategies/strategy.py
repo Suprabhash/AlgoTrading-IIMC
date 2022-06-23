@@ -46,26 +46,6 @@ class strategy:
             strat.plot_performance(self.frequency, allocation=allocation, interest_rate = interest_rate, save_to=save_plot_to)
         return signals, equity_curve
 
-    def lookup_closing_state(self, lookbacks, search_params, date, strategy_name, data_freq):
-        """ This function looks up the Train end date along with the param space to find the closing signal at the end of the training date.
-            Currently searches all the lookbacks file even though result might be same"""
-        for lookback in lookbacks:
-            with open(f'Caches/{self.ticker}/{data_freq}/{strategy_name}/SelectedStrategies/All_{lookback}.pkl', 'rb') as file:
-                strategies = pickle.load(file)
-            for strat in strategies:
-                if strat['Train End Date'] == date:
-                    df = strat['Strategies']
-                    if search_params in list(df['params']):
-                        closing_state = df[df['params'] == search_params].reset_index()['closing_state'][0]
-                        # print(closing_state)
-                        return closing_state
-                    else:
-                        print('Not present')
-                        return None
-                else:
-                    continue
-        return None
-
     def get_optimization_params():
         pass
 

@@ -1,34 +1,30 @@
-from .config import number_selected_filteredstrategies, recalib_periods
+from Backtester.backtester import backtester
 from ..strategy import strategy
-from Strategies.RSI.config import *
+import itertools
 from Utils.add_features import add_RSI
 import numpy as np
 import matplotlib.pyplot as plt
+from pathos.multiprocessing import ProcessingPool
 
 class RSI(strategy):
     def __init__(self):
         strategy.__init__(self)
-        self.parameter_searchspace = [params_searchspace[key] for key in params_searchspace.keys()]
-        self.metric_searchspace = [metrics]
-        self.RSI_lookbacks = RSI_lookbacks
-        self.strategy_lookbacks = strategy_lookbacks
-        self.number_of_optimisation_periods = number_of_optimisation_periods
-        self.recalib_periods = recalib_periods
-        self.num_strategies = num_strategies
-        self.metrics_opt = metrics_opt
-        self.number_selected_filteredstrategies = number_selected_filteredstrategies
-        self.consider_selected_strategies_over = consider_selected_strategies_over
-        self.metric_threshold = metric_threshold
 
-    def add_features(self, data):
-        for RSI_lookbacks in self.RSI_lookbacks:
-            data = add_RSI(data, RSI_lookbacks)
-        return data
+    def add_features(self, data, params):
+        params = [[data]]+[["Close"]]+params
+        inputs = list(itertools.product(*params))
+        pool = ProcessingPool(7)
+        results = pool.map(add_RSI, inputs)
+        pool.clear()
+        for result in results:
+            data[result.columns[-1]] = result.filter(regex='RSI.*')
+        self.data = data
+        return self.data
 
-    def create_signals(self, df_input, final_signal_formation, *params):
+    def create_signals(self, df_input, *params):
         """
             Creates signals based on RSI values and its defined thresholds. A buy signal is created when RSI crosses over lower bound from bottom to top
-            A sell signal is created when fisher crosses over upper bound from top to bottom
+            A sell signal is created when RSI crosses over upper bound from top to bottom
             :param df: Receives the OHLCV data frame with a column for Datetime
             :param params: A list of the lookback, lower bound and  upper bound
             :return: Returns a dataframe consisting of the Datetime and the signal
@@ -60,11 +56,7 @@ class RSI(strategy):
         df.signal_bounds = df.signal_bounds.fillna(0)
 
         df["signal"] = df.signal_bounds
-        # Making the final value 0 implying closing positions at end of time period
-        if not final_signal_formation:
-            df["signal"][-1:] = 0
-        df1 = df.reset_index(drop=True)
-        return df1[["Datetime", "signal", "lb", "ub", "RSI"]]
+        return df[["Datetime", "signal", "lb", "ub", "RSI"]]
 
 
     def plotting_function(self, df):
@@ -126,10 +118,6 @@ class RSI(strategy):
                             alpha=0.5, color=d_color[df.signal[i - 1]], label="interval")
                 j = i
         plt.show()
-
-
-
-
 
 
 
