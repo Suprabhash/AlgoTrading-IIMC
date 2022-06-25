@@ -348,49 +348,49 @@ class BacktestOptimiser():
                     signal['signal'].to_frame().rename(columns={'signal': f'Strategy{i + 1}'}).set_index(
                         signal["Datetime"])), left_index=True, right_index=True)
 
-        def alpha(*args):
-            weights = []
-            for weight in args:
-                weights.append(weight)
-            weights = pd.DataFrame(weights)
-            weights = weights / weights.sum()
-            signal_final = pd.DataFrame(np.dot(np.where(np.isnan(signals), 0, signals), weights))
-            signal_final = pd.DataFrame(np.where(signal_final > 0.5, 1, 0)).set_index(signals.index).rename(
-                columns={0: 'signal'})
-            inp = pd.merge(df.set_index(df["Datetime"]).drop(columns=["Datetime"]).astype(float),
-                           signal_final[["signal"]].astype(float), left_index=True, right_index=True)
-            inp = inp.reset_index()
-            strat = backtester(data=inp, strategy=None)
-            ec = strat.signal_performance(10000, 6, data_frequency).dropna()
-            return ec
+        # def alpha(*args):
+        #     weights = []
+        #     for weight in args:
+        #         weights.append(weight)
+        #     weights = pd.DataFrame(weights)
+        #     weights = weights / weights.sum()
+        #     signal_final = pd.DataFrame(np.dot(np.where(np.isnan(signals), 0, signals), weights))
+        #     signal_final = pd.DataFrame(np.where(signal_final > 0.5, 1, 0)).set_index(signals.index).rename(
+        #         columns={0: 'signal'})
+        #     inp = pd.merge(df.set_index(df["Datetime"]).drop(columns=["Datetime"]).astype(float),
+        #                    signal_final[["signal"]].astype(float), left_index=True, right_index=True)
+        #     inp = inp.reset_index()
+        #     strat = backtester(data=inp, strategy=None)
+        #     ec = strat.signal_performance(10000, 6, data_frequency).dropna()
+        #     return ec
 
-        def prior(params):
-            weights = params
-            weights = [weight / sum(weights) for weight in weights]
-            # for weight in weights:
-            #     if weight > 0.3:
-            #         return 0
-            return 1
+        # def prior(params):
+        #     weights = params
+        #     weights = [weight / sum(weights) for weight in weights]
+        #     # for weight in weights:
+        #     #     if weight > 0.3:
+        #     #         return 0
+        #     return 1
 
-        if len(selected_strategies) > 1:
-            opt = Optimiser(method="MCMC")
-            opt.define_alpha_function(alpha)
-            opt.define_optim_function(metric)
-            opt.define_prior(prior)
-            guesses = [(list(np.random.dirichlet(np.ones(len(selected_strategies))))) for i in range(starting_points)]
-            if len(guesses) == 1:
-                guesses = guesses[0]
-            opt.define_guess(guess=guesses)
-            opt.define_iterations(200)
-            opt.define_lower_and_upper_limit(0, 1)
-            opt.optimise(parallelize=True)
-            res = opt.return_results()
-            weights = pd.DataFrame(res.iloc[0]["params"])
-            weights = weights / weights.sum(axis=0)
-        else:
-            weights = pd.DataFrame([1])
-
-        selected_strategies["weights"] = weights
+        # if len(selected_strategies) > 1:
+        #     opt = Optimiser(method="MCMC")
+        #     opt.define_alpha_function(alpha)
+        #     opt.define_optim_function(metric)
+        #     opt.define_prior(prior)
+        #     guesses = [(list(np.random.dirichlet(np.ones(len(selected_strategies))))) for i in range(starting_points)]
+        #     if len(guesses) == 1:
+        #         guesses = guesses[0]
+        #     opt.define_guess(guess=guesses)
+        #     opt.define_iterations(200)
+        #     opt.define_lower_and_upper_limit(0, 1)
+        #     opt.optimise(parallelize=True)
+        #     res = opt.return_results()
+        #     weights = pd.DataFrame(res.iloc[0]["params"])
+        #     weights = weights / weights.sum(axis=0)
+        #     print(weights)
+        # else:
+        #     weights = pd.DataFrame([1])
+        selected_strategies["weights"] = 1/len(selected_strategies)
         return selected_strategies
 
     def optimize_weights(self):
@@ -447,7 +447,6 @@ class BacktestOptimiser():
             try:
                 df = self.data[(self.data["Datetime"]>=selected_strategies[i]["Train End Date"])&(self.data["Datetime"]<=selected_strategies[i]["Test End Date"])]
                 strategies = strategy["Strategies"]
-
                 for j in range(len(strategies)):
 
                     with open(f'Caches/{self.ticker}/{self.data_frequency}/{self.strategy_name}/SelectedStrategies/Backtests/{tuple(callable_functions_helper(list(strategies.iloc[j]["params"]))[0])}.pkl','rb') as file:
@@ -465,8 +464,9 @@ class BacktestOptimiser():
                 inp = pd.merge(df.set_index(df["Datetime"]).drop(columns=["Datetime"]).astype(float), signal_final[["signal"]].astype(float), left_index=True, right_index=True)
                 inp_all = pd.concat([inp_all, inp])
             except Exception as e:
-                # print(e)
                 pass
+
+        
 
         inp_all = inp_all[["Close", "signal"]].reset_index().fillna(method="ffill")
         strat = backtester(data = inp_all, strategy=None)

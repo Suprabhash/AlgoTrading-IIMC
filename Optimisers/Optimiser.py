@@ -26,7 +26,7 @@ class Optimiser():
         self.method = method
         self.data = None
         self.metrics_searchspace = None
-
+        self.target = 0
         def optim_function(a):
             return a
 
