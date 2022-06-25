@@ -7,6 +7,9 @@ import seaborn as sns
 sns.set_style("whitegrid", {'axes.grid' : False})
 from Strategies.RSI.RSI import RSI
 from Metrics.Metrics import SharpeRatio
+import sys
+import os
+sys.path.append(os.getcwd())
 
 from BacktestOptimiser.BacktestOptimiser import BacktestOptimiser
 from Utils.utils import correlation_filter
