@@ -13,16 +13,24 @@ sys.path.append(os.getcwd())
 
 from BacktestOptimiser.BacktestOptimiser import BacktestOptimiser
 from Utils.utils import correlation_filter
+from StockScreener.screener import screener
+from StockScreener.Nifty50 import tickers as universe_of_stocks
+from StockScreener.screener import simple_momentum_rules as rules
 
 if __name__=='__main__':
 
-    optimiser = BacktestOptimiser(strategy = RSI, ticker = "^NSEI", data_frequency = 'D')
+    print("Selecting Tickers")
+    sc = screener(universe_of_stocks=universe_of_stocks, screener_rules=rules)
+    ticker = sc.select_tickers(number=1)
+    print(f"Tickers selected: {ticker}")
+
+    optimiser = BacktestOptimiser(strategy = RSI, ticker = ticker, data_frequency = 'D')
 
     print("Getting data")
     optimiser.get_data()
 
     print("Creating Dates")
-    optimiser.create_dates("3_Months")
+    optimiser.create_dates("1_Months")
 
     print("Adding features")
     optimiser.add_features()
