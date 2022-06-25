@@ -21,7 +21,7 @@ if __name__=='__main__':
 
     print("Selecting Tickers")
     sc = screener(universe_of_stocks=universe_of_stocks, screener_rules=rules)
-    ticker = sc.select_tickers(number=1)
+    ticker = sc.select_tickers(number=1)[0]
     print(f"Tickers selected: {ticker}")
 
     optimiser = BacktestOptimiser(strategy = RSI, ticker = ticker, data_frequency = 'D')
@@ -30,7 +30,7 @@ if __name__=='__main__':
     optimiser.get_data()
 
     print("Creating Dates")
-    optimiser.create_dates("1_Months")
+    optimiser.create_dates("12_Months")
 
     print("Adding features")
     optimiser.add_features()
