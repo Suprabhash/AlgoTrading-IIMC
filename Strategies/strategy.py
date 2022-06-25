@@ -5,7 +5,7 @@ import pickle
 import time
 
 import pandas as pd
-from ..Backtester.backtester import backtester
+from Backtester.backtester import backtester
 from Utils.add_features import feature_creator
 from Data.data_retrieval import get_data as get_Data
 
