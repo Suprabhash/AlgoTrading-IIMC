@@ -21,7 +21,7 @@ class RSI(strategy):
         self.data = data
         return self.data
 
-    def create_signals(self, df_input, *params):
+    def create_signals(self, df_input, *params):   #Add a risk management module that checks while creating signals
         """
             Creates signals based on RSI values and its defined thresholds. A buy signal is created when RSI crosses over lower bound from bottom to top
             A sell signal is created when RSI crosses over upper bound from top to bottom

@@ -20,7 +20,7 @@ class strategy:
         self.ticker = ticker
         self.frequency = frequency
 
-    def get_data(self, ticker, frequency):
+    def get_data(self, ticker, frequency):   #Create a list of tickers to pass in multiple options
         self.ticker = ticker
         self.frequency = frequency
         self.data = get_Data(ticker, frequency)
