@@ -72,8 +72,8 @@ class backtester:
         self.data['S_Return'] = self.data['signal'].shift(1) * self.data['Return']
         self.data['S_Return'] = self.data['S_Return'].fillna(0)
         self.data["S_Return"] = self.data["S_Return"] + (self.int/(100*annual_factor))*(1-self.data['signal'].shift(1))
-        self.data['Market_Return'] = np.exp(self.data['Return'].expanding().sum())
-        self.data['Strategy_Return'] = np.exp( self.data['S_Return'].expanding().sum())
+        self.data['Market_Return'] = np.cumprod(self.data["Return"]+1)-1
+        self.data['Strategy_Return'] = np.cumprod(self.data["S_Return"]+1)-1
         self.data['Portfolio_Value'] = ((self.data['Strategy_Return'] + 1) * self.allocation)
 
         mask = ((self.data.signal == 1) & (self.data.signal.shift(1) == 0)) & (self.data.signal.notnull())

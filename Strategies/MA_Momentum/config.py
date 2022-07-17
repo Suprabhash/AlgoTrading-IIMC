@@ -5,9 +5,10 @@ from Metrics.Metrics import *
 from Utils.utils import frange
 
 params_searchspace = {
-    "lookbacks": frange(14, 16, 2),
-    "ub": frange(10,20,5),
-    "lb": frange(10,20,5)
+    "percentile_lookbacks": [76],
+    "percentile_volume_for_trade": [0.9],
+    "percentile_barsize_for_buy": [0.91],
+    "percentile_barsize_for_sell": [0.1]
 }
 
 metrics = [SharpeRatio]

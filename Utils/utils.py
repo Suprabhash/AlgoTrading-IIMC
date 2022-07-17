@@ -3,6 +3,9 @@ import numpy as np
 import decimal
 import pandas as pd
 import pickle
+from tqdm import tqdm
+import multiprocessing
+from scipy import stats
 
 def frange(start, end, jump):
     naive_list = np.arange(start, end, jump).tolist()
@@ -86,3 +89,37 @@ def interpret_time_unit(str):
     units = frequency[str.split('_')[1]]
     return num, units
 
+
+###
+# Percentile Scaler
+###
+def rolling_percentile(inp):
+    df = inp[0]
+    lookback_percentile = inp[1]
+    columns = inp[2]
+    for column in columns:
+        df[f"{column}_percentile_over_{lookback_percentile}"] = np.nan
+        for i in range(len(df)):
+            try:
+                df.loc[df.index[i], f"{column}_percentile_over_{lookback_percentile}"] = stats.percentileofscore(
+                    df.iloc[i - lookback_percentile + 1:i][column], df.iloc[i][column])/100
+            except:
+                continue
+        df.loc[:lookback_percentile, f"{column}_percentile_over_{lookback_percentile}"] = np.nan
+    return df[[f"{column}_percentile_over_{lookback_percentile}" for column in columns]]
+
+def rolling_percentile_parallelized(df_inp, lookback_percentiles, columns):
+    df = df_inp.copy()
+    inputs = []
+    for lookback_percentile in lookback_percentiles:
+        inputs.append([df, lookback_percentile, columns])
+    try:
+        pool = multiprocessing.Pool(processes=7, maxtasksperchild=1)
+        results = pool.map(rolling_percentile, inputs)
+    finally: # To make sure processes are closed in the end, even if errors happen
+        pool.close()
+        pool.join()
+
+    for result in results:
+        df = pd.concat([df, result], axis=1)
+    return df

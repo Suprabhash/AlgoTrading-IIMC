@@ -20,7 +20,7 @@ from StockScreener.screener import simple_momentum_rules as rules
 if __name__=='__main__':
 
     print("Selecting Tickers")
-    sc = screener(universe_of_stocks=universe_of_stocks, screener_rules=rules)
+    sc = screener(universe_of_stocks=universe_of_stocks[:1], screener_rules=rules)
     ticker = sc.select_tickers(number=1)[0]
     print(f"Tickers selected: {ticker}")
 
@@ -42,7 +42,7 @@ if __name__=='__main__':
     optimiser.select_strategies(use_optimiser = "BruteForce",parallelize=True)
 
     print("Checking Selected Strategies")
-    optimiser.check_selected_strategies(forward_months=2)
+    optimiser.check_selected_strategies(forward_time={"months": 2})
 
     print("Filtering Strategies")
     optimiser.filter_strategies(filter_function = correlation_filter)

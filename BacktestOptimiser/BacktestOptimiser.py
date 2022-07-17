@@ -97,7 +97,11 @@ class BacktestOptimiser():
 
     def create_dates(self, time_unit):
         self.time_unit = interpret_time_unit(time_unit)
-        self.dates = valid_dates(pd.date_range(start=str(self.data.iloc[0]['Datetime'] + timedelta(days=365)), end="2034-06-15", freq=f'{self.time_unit[0]}{self.time_unit[1]}'))
+        if self.time_unit[1]=="M":
+            timedelta_inp = {"days": 365}
+        if self.time_unit[1]=="B":
+            timedelta_inp = {"seconds": 24*60*60}
+        self.dates = valid_dates(pd.date_range(start=str(self.data.iloc[0]['Datetime'] + timedelta(**timedelta_inp)), end="2034-06-15", freq=f'{self.time_unit[0]}{self.time_unit[1]}'))
 
     def backtest(self, args):
         _, ec = self.strategy.do_backtest(callable_functions_helper(list(args[0:-1]))[0], start = self.data.iloc[0]["Datetime"], end = self.data.iloc[-1]["Datetime"],allocation=10000, interest_rate=6, plot=False, save_plot_to=None)
@@ -138,7 +142,7 @@ class BacktestOptimiser():
                     strategies[lookback][date_i]["metric_val"] = getattr(function_lib, args[-1].__name__)(ec)
                     strategies[lookback][date_i]['Lookback']=lookback
                 else:
-                    strategies[lookback].append({"Train Start Date": None, "Train End Date": self.dates[date_i], "Strategies": None, "Lookback": lookback})
+                    strategies[lookback].append({"Train Start Date": None, "Train End Date": self.dates[date_i], "Strategies": None, "Lookback": lookback, "metric_val": None})
         return {"params":tuple(args[0:-1]),"strategies":strategies}
 
     def select_helper(self,args):
@@ -154,9 +158,10 @@ class BacktestOptimiser():
                 count += 1
             else:
                 select_strategies[index] = pd.DataFrame(strat["strategies"][lookback])["metric_val"]
+
         select_strategies["Strategies"] = ''
         for i in range(len(select_strategies.index)):
-            select_strategies["Strategies"].iloc[i] = (((select_strategies.iloc[:, 3:-1].loc[i]).reset_index()).rename(
+            select_strategies["Strategies"].iloc[i] = (((select_strategies.iloc[:, 2:-1].loc[i]).reset_index()).rename(
                                                         columns={'index': 'params', i: 'metric_val'})).sort_values(by="metric_val",ascending=False).reset_index(drop=True)
             select_strategies["Strategies"].iloc[i]["metric"] = self.metrics_searchspace[-1][-1]
             select_strategies["Strategies"].iloc[i]["Lookback"] = lookback
@@ -177,6 +182,7 @@ class BacktestOptimiser():
         optimiser.define_parameter_searchspace([[i for i in self.lookbacks]])
         optimiser.define_alpha_function(self.select_helper)
         select_strategies = (optimiser.optimise(parallelize=parallelize))
+
         count=0
         for lookback in (self.lookbacks):
             with open(f'Caches/{self.ticker}/{self.data_frequency}/{self.strategy_name}/SelectedStrategies/All_{lookback}.pkl','wb') as file:
@@ -184,7 +190,7 @@ class BacktestOptimiser():
             count+=1
             print(f"{lookback}_Done")
 
-    def check_selected_strategies(self, forward_months):
+    def check_selected_strategies(self, forward_time):
         if not os.path.exists(f'Caches/{self.ticker}/{self.data_frequency}/{self.strategy_name}/CheckSelectedStrategies'):
             os.makedirs(f'Caches/{self.ticker}/{self.data_frequency}/{self.strategy_name}/CheckSelectedStrategies')
 
@@ -195,7 +201,7 @@ class BacktestOptimiser():
                 if date_i - (int(lookback / self.time_unit[0])) >= 0:
                     _, ec = self.strategy.do_backtest(list(strategies[date_i]["Strategies"]['params'].iloc[0]), start= strategies[date_i]["Train Start Date"], end= strategies[date_i]["Train End Date"],  allocation=10000, interest_rate=6, plot=True,
                                                      save_plot_to=f'Caches/{self.ticker}/{self.data_frequency}/{self.strategy_name}/CheckSelectedStrategies')
-                    _, ec = self.strategy.do_backtest(list(strategies[date_i]["Strategies"]['params'].iloc[0]), start= strategies[date_i]["Train End Date"], end= strategies[date_i]["Train End Date"] + relativedelta(months=forward_months),  allocation=10000, interest_rate=6, plot=True,
+                    _, ec = self.strategy.do_backtest(list(strategies[date_i]["Strategies"]['params'].iloc[0]), start= strategies[date_i]["Train End Date"], end= strategies[date_i]["Train End Date"] + relativedelta(**forward_time),  allocation=10000, interest_rate=6, plot=True,
                                                      save_plot_to=f'Caches/{self.ticker}/{self.data_frequency}/{self.strategy_name}/CheckSelectedStrategies'+"/"+f"{str(strategies[date_i]['Train Start Date'])[:11]}"+f"{str(strategies[date_i]['Train End Date'])[:11]}"+f"{list(strategies[date_i]['Strategies']['params'].iloc[0])}"+"Test.jpg")
 
 
@@ -474,11 +480,11 @@ class BacktestOptimiser():
         strat.plot_performance(self.data_frequency, save_to=f"Caches/{self.ticker}/{self.data_frequency}/{self.strategy_name}/equity_curves/Results_LP{number_of_optimization_period}_Recal{recalib_periods}_NS{num_strategies}_M{metric}.jpg")
         ec.to_csv(f"Caches/{self.ticker}/{self.data_frequency}/{self.strategy_name}/csv_files/Results_LP{number_of_optimization_period}_Recal{recalib_periods}_NS{num_strategies}_M{metric}.csv")
 
-    def select_best_and_mail_results(self):
+    def select_best_and_mail_results(self, parallelize=True):
         optimiser = Optimiser(method="BruteForce")
         optimiser.define_parameter_searchspace([self.number_of_optimisation_periods, self.recalib_periods, self.num_strategies, self.metrics_opt])
         optimiser.define_alpha_function(self.backtest_weighted_strategy)
-        optimiser.optimise(parallelize=True)
+        optimiser.optimise(parallelize=parallelize)
         res = []
         for number_of_optimization_period in self.number_of_optimisation_periods:
             for recalib_periods in self.recalib_periods:
