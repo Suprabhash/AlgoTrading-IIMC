@@ -48,20 +48,22 @@ class MA_Momentum(strategy):
         params = params[0]
         percentile_lookback = params[0]
         percentile_volume_for_trade = params[1]
-        percentile_barsize_for_buy = params[2]
-        percentile_barsize_for_sell = params[3]
+        percentile_barsize_for_buy_max = params[2]
+        percentile_barsize_for_buy_min = params[3]
+        percentile_barsize_for_sell = params[4]
 
         df['Volume_percentile'] = df[f'Volume_percentile_over_{percentile_lookback}']
         df['BarSize_percentile'] = df[f'Size_of_Candle_percentile_over_{percentile_lookback}']
         df["percentile_volume_for_trade"] = percentile_volume_for_trade
-        df["percentile_barsize_for_buy"] = percentile_barsize_for_buy
+        df["percentile_barsize_for_buy_max"] = percentile_barsize_for_buy_max
+        df["percentile_barsize_for_buy_min"] = percentile_barsize_for_buy_min
         df["percentile_barsize_for_sell"] = percentile_barsize_for_sell
         df.dropna()
         df.reset_index(inplace=True, drop=True)
 
         # Creating buy/sell signals
         # Setting the conditions here
-        buy_mask = (df['Volume_percentile'] > percentile_volume_for_trade) & (df['BarSize_percentile'] > percentile_barsize_for_buy)
+        buy_mask = (df['Volume_percentile'] > percentile_volume_for_trade) & (percentile_barsize_for_buy_max> df['BarSize_percentile']) & (df['BarSize_percentile']> percentile_barsize_for_buy_min)
         sell_mask = (df['Volume_percentile'] > percentile_volume_for_trade) & (df['BarSize_percentile'] < percentile_barsize_for_sell)
         bval = 1
         sval = 0
@@ -72,7 +74,7 @@ class MA_Momentum(strategy):
         df.signal_bounds = df.signal_bounds.fillna(0)
 
         df["signal"] = df.signal_bounds
-        return df[["Datetime", "signal", "Volume_percentile", "BarSize_percentile", "percentile_volume_for_trade", "percentile_barsize_for_buy", "percentile_barsize_for_sell"]]
+        return df[["Datetime", "signal", "Volume_percentile", "BarSize_percentile", "percentile_volume_for_trade", "percentile_barsize_for_buy_max", "percentile_barsize_for_sell"]]
 
 
     def plotting_function(self, df, save_to=None):
@@ -112,7 +114,7 @@ class MA_Momentum(strategy):
         plt.plot(df['Datetime'], df['Volume_percentile'], color='black', label='Volume_percentile')
         plt.plot(df['Datetime'], df['BarSize_percentile'], color='blue', label='BarSize_percentile')
         plt.plot(df['Datetime'], df['percentile_volume_for_trade'], color='yellow', label='percentile_volume_for_trade')
-        plt.plot(df['Datetime'], df['percentile_barsize_for_buy'], color='green', label='percentile_barsize_for_buy')
+        plt.plot(df['Datetime'], df['percentile_barsize_for_buy_max'], color='green', label='percentile_barsize_for_buy_max')
         plt.plot(df['Datetime'], df['percentile_barsize_for_sell'], color='red', label='percentile_barsize_for_sell')
 
         plt.plot(df.loc[buy_plot_mask]['Datetime'].shift(1), df.loc[buy_plot_mask]['BarSize_percentile'].shift(1), r'^',

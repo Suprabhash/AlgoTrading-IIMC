@@ -7,7 +7,8 @@ from Utils.utils import frange
 params_searchspace = {
     "percentile_lookbacks": [76],
     "percentile_volume_for_trade": [0.9],
-    "percentile_barsize_for_buy": [0.91],
+    "percentile_barsize_for_buy_max": [0.9],
+    "percentile_barsize_for_buy_min": [0.8],
     "percentile_barsize_for_sell": [0.1]
 }
 

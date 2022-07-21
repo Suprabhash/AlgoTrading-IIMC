@@ -74,7 +74,7 @@ if __name__=='__main__':
 
     print("Creating Multiasset Portfolio backtest")
     initial_portfolio_value = 10000
-    pa = PortfolioAllocator(df)
+    pa = PortfolioAllocator(df)   #Consider correlateon filter here too
     pa.create_dates("all")
     pa.select_tickers(tickers)
     portfolio_value, units_ticker = pa.allocate(initial_portfolio_value=initial_portfolio_value, interest_rate=7)

@@ -104,7 +104,7 @@ class BacktestOptimiser():
         self.dates = valid_dates(pd.date_range(start=str(self.data.iloc[0]['Datetime'] + timedelta(**timedelta_inp)), end="2034-06-15", freq=f'{self.time_unit[0]}{self.time_unit[1]}'))
 
     def backtest(self, args):
-        _, ec = self.strategy.do_backtest(callable_functions_helper(list(args[0:-1]))[0], start = self.data.iloc[0]["Datetime"], end = self.data.iloc[-1]["Datetime"],allocation=10000, interest_rate=6, plot=False, save_plot_to=None)
+        _, ec = self.strategy.do_backtest(callable_functions_helper(list(args[0:-1]))[0], start = self.data.iloc[0]["Datetime"], end = self.data.iloc[-1]["Datetime"],allocation=10000, interest_rate=0, plot=False, save_plot_to=None)
         result = {"params": args[0:-1], "equity_curve": ec[['Datetime', 'Close', 'signal', 'Return', 'S_Return']]}
         with open(f'Caches/{self.ticker}/{self.data_frequency}/{self.strategy_name}/SelectedStrategies/Backtests/{tuple(callable_functions_helper(list(result["params"]))[0])}.pkl','wb') as file:
             pickle.dump(result, file)
